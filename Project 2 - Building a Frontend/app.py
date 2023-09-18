@@ -1,4 +1,5 @@
 import os
+from langchain.vectorstores import Chroma
 import pinecone, tiktoken
 import streamlit as st
 
@@ -78,78 +79,33 @@ def chunk_data(data, chunk_size=400, chunk_overlap=80):
     return chunks
 
 #################################
-### Insert/ Fetch embeddings
+### Create embeddings
 
-# def create_embeddings(chunks):
-#     embeddings=OpenAIEmbeddings()
-#     vector_store=Pinecone.from_documents(
-#                                 chunks, 
-#                                 embeddings, 
-#                                 index_name=index_name)
-    
-
-def insert_or_fetch_embeddings(index_name, chunks, embeddings_type='instruct'):
-    
-    if embeddings_type == 'instruct':
-        embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl", )
-        embedding_dimension = 768
-    elif embeddings_type == 'openai':
-        embeddings = OpenAIEmbeddings()
-        embedding_dimension = 1536
-    else:
-        print("Unknown Embeddings type.")
-        return None
-        
-    # Inititate connection to the PineCone
-    pinecone.init(api_key=os.environ.get('PINECONE_API_KEY'), environment=os.environ.get('PINECONE_ENV'))
-
-    if index_name in pinecone.list_indexes():
-        print(f'Index {index_name} already exists. Loading embeddings ... ', end='')
-        vector_store = Pinecone.from_existing_index(
-                                index_name, 
-                                embeddings)
-        print('Done')
-    else:
-        print(f'Creating index {index_name} and mapping chunks into embeddings ...', end='')
-        pinecone.create_index(index_name, 
-                              dimension=embedding_dimension, 
-                              metric='cosine')
-        vector_store = Pinecone.from_documents(
-                                chunks, 
-                                embeddings, 
-                                index_name=index_name)
-        print('Done')
-
+def create_embeddings(chunks):
+    embeddings=OpenAIEmbeddings()
+    vector_store=Chroma.from_documents(chunks, embeddings)
     return vector_store
-        
-    
+
 def calculate_embedding_cost(texts):
+    import tiktoken
     enc = tiktoken.encoding_for_model('text-embedding-ada-002')
     total_tokens = sum([len(enc.encode(page.page_content)) for page in texts])
-    return(f'Total Tokens: {total_tokens} | Embedding Cost in USD: {total_tokens / 1000 * 0.0004:.6f}')
+    return f"Total Tokens: {total_tokens} |  Cost: {total_tokens / 1000 * 0.0004}"
+
 
 #################################
 ### Build LLM Chain
 
-def get_llm_chain(vector_store, llm_type = 'google', has_memory=False, num_chunks=5):
-    # 1. LLM
-    if llm_type == 'google':
-        llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature":0.1}) # repo_id = 'meta-llama/Llama-2-70b-chat'
-    elif llm_type == 'openai':
-        llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=0.1)
-    elif llm_type == 'facebook':
-        llm = HuggingFaceHub(repo_id="meta-llama/Llama-2-70b-chat") #, model_kwargs={"temperature":0.1}
-    
+def get_llm_chain(vector_store, num_chunks=5):
+    # 1. Define LLM
+    llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=1)
+
     # 2. Vector Store retriever
     retriever = vector_store.as_retriever(search_type='similarity', search_kwargs={'k': num_chunks})
     
     # 3. Define Chain
-    if not has_memory:
-        chain = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
-    else:
-        llm_memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-        chain = ConversationalRetrievalChain.from_llm(llm, retriever, memory=llm_memory)
-        
+    chain = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
+    
     return chain
     
 
@@ -158,13 +114,19 @@ def get_llm_chain(vector_store, llm_type = 'google', has_memory=False, num_chunk
     
 def ask(query, llm_chain, has_memory=False, chat_history = []):
     if not has_memory:
-        answer = llm_chain.run(q)
+        answer = llm_chain.run(query)
         chat_history=[]
     else:
         chain_output = llm_chain({"question": query})
         answer, chat_history = chain_output['answer'], chain_output['chat_history']
     return answer, chat_history
         
+#################################
+### Build Functions to maintian / reset session
+    
+def reset_session():
+    if 'history' in st.session_state:
+        del st.session_state['history']
 
 #################################
 ### Main
@@ -175,7 +137,6 @@ if __name__ == "__main__":
     from dotenv import load_dotenv, find_dotenv
     load_dotenv(find_dotenv(), override=True)
 
-
     with st.sidebar:
         api_key = st.text_input("OpenAI API Key: ", type='password')
         if api_key:
@@ -183,34 +144,62 @@ if __name__ == "__main__":
         
         
         uploaded_file = st.file_uploader("Upload a File: ", type=['pdf', 'docx', 'txt', 'md'])
-        chunk_size = st.number_input("Chunk Size: ", min_value=100, max_value=1024, value=512)
-        chunk_overlap = st.number_input("Chunk Overlap: ", min_value=20, max_value=256, value=80)
-        k = st.number_input("k: ", min_value=1, max_value=20, value=3)
-        llm_type = st.radio("LLM", ["openai", "google"])
-        embeddings_type = st.radio("Embeddings", ["openai", "instruct"])
-        index_name = st.text_input("PineCone Index Name:")
+        chunk_size = st.number_input("Chunk Size: ", min_value=100, max_value=1024, value=512, on_change=reset_session)
+        chunk_overlap = st.number_input("Chunk Overlap: ", min_value=20, max_value=256, value=80, on_change=reset_session)
+        k = st.number_input("k: ", min_value=1, max_value=20, value=3, on_change=reset_session)
+        # llm_type = st.radio("LLM", ["openai", "google"])
+        # embeddings_type = st.radio("Embeddings", ["openai", "instruct"])
+        # has_memory = st.checkbox('Save Chat History')
+        
+        # index_name = st.text_input("PineCone Index Name:")
 
-        add_data = st.button("Add Data")
+        add_data = st.button("Load Data", on_click=reset_session)
 
 
         if uploaded_file and add_data:
-            with st.spinner("Reading..."):
+            with st.spinner("Reading...", ):
                 bytes_data = uploaded_file.read()
                 file_name = os.path.join("./", uploaded_file.name)
                 with open(file_name, 'wb') as f:
                     f.write(bytes_data)
                 
                 data = load_document(file_name)
+                st.write("Reading... Done")
 
             with st.spinner("Chunking Data..."):
                 chunks = chunk_data(data, chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+                st.write("Chunking Data... Done")
                 st.write(f"Chunk size: {chunk_size}, Num Chunks: {len(chunks)}")
 
-            with st.spinner("Create/ Fetch Embeddings"):
-                vector_store =  insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
+            with st.spinner("Create Embeddings..."):
+                st.write(calculate_embedding_cost(chunks))
+                vector_store =  create_embeddings(chunks) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
+                st.write("Create/ Fetch Embeddings... Done")
 
+            st.session_state.vs = vector_store
+            st.success("file uploaded, chunked & embedded successfully")
 
+    q = st.text_input("Ask a question about the content of your file:")
+    if q:
+        if 'vs' in st.session_state:
+            vector_store = st.session_state.vs 
+            st.write(f"Searching from the top {k} relevant chunks from vector store")
+            llmchain = get_llm_chain(vector_store=vector_store)
+            answer, chat_history = ask(query=q, llm_chain=llmchain)
 
+            st.text_area('LLM Answer: ', value=answer)
+
+            st.divider()
+
+            if 'chat_history' not in st.session_state:
+                st.session_state.chat_history = ''
+
+            display_text = f'Question: {q} \nAns: {answer}'
+
+            st.session_state.chat_history = f'{display_text} \n {"-" * 100} \n {st.session_state.chat_history}'
+            hist = st.session_state.chat_history
+
+            st.text_area(label='Chat History', value=hist, key='chat_history', height=400)
 
             
 
