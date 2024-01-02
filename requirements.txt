@@ -2,3 +2,4 @@ langchain==0.0.277
 pinecone-client==2.2.2
 tiktoken==0.4.0
 python-dotenv==1.0.0
+PyPDF2==3.0.1
