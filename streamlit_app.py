@@ -138,9 +138,11 @@ if __name__ == "__main__":
     load_dotenv(find_dotenv(), override=True)
 
     with st.sidebar:
-        api_key = st.text_input("OpenAI API Key: ", type='password')
-        if api_key:
-            os.environ['OPENAI_API_KEY'] = api_key
+        # api_key = st.text_input("OpenAI API Key: ", type='password')
+        # if api_key:
+        #     os.environ['OPENAI_API_KEY'] = api_key
+        api_key = os.environ['OPENAI_API_KEY'] 
+        
         
         
         uploaded_file = st.file_uploader("Upload a File: ", type=['pdf', 'docx', 'txt', 'md'])
