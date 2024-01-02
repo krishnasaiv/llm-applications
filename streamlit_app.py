@@ -1,5 +1,5 @@
 import os
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import FAISS #Chroma
 import pinecone, tiktoken
 import streamlit as st
 
@@ -83,7 +83,7 @@ def chunk_data(data, chunk_size=400, chunk_overlap=80):
 
 def create_embeddings(chunks):
     embeddings=OpenAIEmbeddings()
-    vector_store=Chroma.from_documents(chunks, embeddings)
+    vector_store=FAISS.from_documents(chunks, embeddings)
     return vector_store
 
 def calculate_embedding_cost(texts):
