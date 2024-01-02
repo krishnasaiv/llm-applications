@@ -8,7 +8,7 @@ from langchain.vectorstores import Pinecone
 
 #Embeddings
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.embeddings import HuggingFaceInstructEmbeddings
+# from langchain.embeddings import HuggingFaceInstructEmbeddings
 
 # Document Loaders
 from langchain.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader, UnstructuredMarkdownLoader, WikipediaLoader
@@ -18,7 +18,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # LLMs, Memory & Chains
 from langchain.chat_models import ChatOpenAI
-from langchain.llms import HuggingFaceHub
+# from langchain.llms import HuggingFaceHub
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
 
