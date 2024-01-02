@@ -7,3 +7,4 @@ pypdf==3.15.5
 openai==0.28.0
 chroma-hnswlib==0.7.3
 chromadb==0.4.10
+sqlite3>=3.35.0
