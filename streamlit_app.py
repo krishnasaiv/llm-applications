@@ -81,8 +81,8 @@ def chunk_data(data, chunk_size=400, chunk_overlap=80):
 #################################
 ### Create embeddings
 
-def create_embeddings(chunks):
-    embeddings=OpenAIEmbeddings()
+def create_embeddings(chunks, openai_api_key):
+    embeddings=OpenAIEmbeddings(openai_api_key=openai_api_key)
     vector_store=FAISS.from_documents(chunks, embeddings)
     return vector_store
 
@@ -96,9 +96,9 @@ def calculate_embedding_cost(texts):
 #################################
 ### Build LLM Chain
 
-def get_llm_chain(vector_store, num_chunks=5):
+def get_llm_chain(vector_store, openai_api_key, num_chunks=5):
     # 1. Define LLM
-    llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=1)
+    llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=1, openai_api_key=openai_api_key)
 
     # 2. Vector Store retriever
     retriever = vector_store.as_retriever(search_type='similarity', search_kwargs={'k': num_chunks})
@@ -141,7 +141,7 @@ if __name__ == "__main__":
         # api_key = st.text_input("OpenAI API Key: ", type='password')
         # if api_key:
         #     os.environ['OPENAI_API_KEY'] = api_key
-        api_key = os.getenv('OPENAI_API_KEY')
+        api_key =  os.getenv('OPENAI_API_KEY') 
         
         
         
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
             with st.spinner("Create Embeddings..."):
                 st.write(calculate_embedding_cost(chunks))
-                vector_store =  create_embeddings(chunks) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
+                vector_store =  create_embeddings(chunks, openai_api_key=api_key) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
                 st.write("Create/ Fetch Embeddings... Done")
 
             st.session_state.vs = vector_store
