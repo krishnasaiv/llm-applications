@@ -186,7 +186,7 @@ if __name__ == "__main__":
         if 'vs' in st.session_state:
             vector_store = st.session_state.vs 
             st.write(f"Searching from the top {k} relevant chunks from vector store")
-            llmchain = get_llm_chain(vector_store=vector_store)
+            llmchain = get_llm_chain(vector_store=vector_store, openai_api_key=api_key)
             answer, chat_history = ask(query=q, llm_chain=llmchain)
 
             st.text_area('LLM Answer: ', value=answer)
