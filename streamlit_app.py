@@ -210,7 +210,7 @@ if __name__ == "__main__":
 
             with st.spinner("Create Embeddings..."):
                 st.write(calculate_embedding_cost(chunks))
-                vector_store =  create_embeddings(chunks, openai_api_key=api_key) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
+                vector_store = create_embeddings(chunks, openai_api_key=api_key) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
                 st.write("Create/ Fetch Embeddings... Done")
 
             st.session_state.vs = vector_store
@@ -226,7 +226,8 @@ if __name__ == "__main__":
         st.session_state.history.append(HumanMessage(content=q))
         if 'vs' in st.session_state:
             with st.spinner('Working on your request ...'):
-                llmchain = get_llm_chain(vector_store=st.session_state.vs , model_name=model_name, openai_api_key=api_key)
+                vector_store = st.session_state.vs 
+                llmchain = get_llm_chain(vector_store=vector_store , model_name=model_name, openai_api_key=api_key)
                 answer, chat_history = ask(query=q, llm_chain=llmchain)
             st.session_state.history.append(AIMessage(content=answer))
 
