@@ -152,8 +152,8 @@ def reset_session():
     if 'history' in st.session_state:
         st.session_state['history'] = []
 
-    if 'vs' in st.session_state:
-        del st.session_state['vs']
+    # if 'vs' in st.session_state:
+    #     del st.session_state['vs']
 
 
 
