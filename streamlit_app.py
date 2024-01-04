@@ -212,12 +212,7 @@ if __name__ == "__main__":
                 st.write("Create/ Fetch Embeddings... Done")
             
             st.session_state.vs = vector_store
-            # st.write(type(vector_store), vector_store is None, type(st.session_state.vs), st.session_state.vs is None)
             st.success("file uploaded, chunked & embedded successfully")
-
-    # if len(st.session_state.history) >= 1:
-    #     if not isinstance(st.session_state.history[0], SystemMessage):
-    #         st.session_state.history.insert(0, SystemMessage(content='You are a helpful assistant.'))
 
 
     q = st.text_input("Ask a question about the content of your file:")
@@ -226,9 +221,7 @@ if __name__ == "__main__":
         st.session_state.history.append(HumanMessage(content=q))
 
         vs = st.session_state.vs 
-        # st.write(type(vs), vs is None)
-        # st.write(type(st.session_state.vs), st.session_state.vs is None)
-    
+
         llmchain = get_llm_chain(vector_store=vs , model_name=model_name, openai_api_key=api_key)
         answer, chat_history = ask(query=q, llm_chain=llmchain)
         st.session_state.history.append(AIMessage(content=answer))
