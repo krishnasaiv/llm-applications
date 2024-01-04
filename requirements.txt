@@ -11,4 +11,5 @@ faiss-cpu==1.7.4
 # sqlite3>=3.35.0
 # pysqlite
 # SQLAlchemy==2.0.20
+streamlit-chat==0.1.1
 
