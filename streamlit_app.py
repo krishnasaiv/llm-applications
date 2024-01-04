@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
     for i, msg in enumerate(st.session_state.history):
         time_stamp = datetime.now().strftime("  %H:%M:%S")
-        if i % 2 == 1:
+        if i % 2 == 0:
             message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
         else:
             message(msg.content, is_user=False, key=f'{i} +  🤖')
