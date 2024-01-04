@@ -227,17 +227,18 @@ if __name__ == "__main__":
         st.session_state.history.append(AIMessage(content=answer))
 
                 # st.text_area('LLM Answer: ', value=answer)
+    with st.container():
 
-    for i, msg in enumerate(st.session_state.history):
-        time_stamp = datetime.now().strftime("  %H:%M:%S")
-        if i % 2 == 0:
-            message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
-        else:
-            message(msg.content, is_user=False, key=f'{i} +  🤖')
+        for i, msg in enumerate(st.session_state.history):
+            time_stamp = datetime.now().strftime("  %H:%M:%S")
+            if i % 2 == 0:
+                message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
+            else:
+                message(msg.content, is_user=False, key=f'{i} +  🤖')
 
 
 
-            # st.divider()
+                # st.divider()
 
             # if 'chat_history' not in st.session_state:
             #     st.session_state.chat_history = ''
