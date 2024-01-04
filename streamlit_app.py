@@ -172,8 +172,7 @@ if __name__ == "__main__":
 
     with st.sidebar:
         api_key =  st.secrets["OPENAI_API_KEY"] #os.getenv('OPENAI_API_KEY') 
-        
-        
+
         
         uploaded_file = st.file_uploader("Upload a File: ", type=['pdf', 'docx', 'txt', 'md'])
         model_name = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4.0-turbo"], index=0, on_change=reset_session)
@@ -217,29 +216,30 @@ if __name__ == "__main__":
             st.session_state.vs = vector_store
             st.success("file uploaded, chunked & embedded successfully")
 
-    if len(st.session_state.history) >= 1:
-        if not isinstance(st.session_state.history[0], SystemMessage):
-            st.session_state.history.insert(0, SystemMessage(content='You are a helpful assistant.'))
+    # if len(st.session_state.history) >= 1:
+    #     if not isinstance(st.session_state.history[0], SystemMessage):
+    #         st.session_state.history.insert(0, SystemMessage(content='You are a helpful assistant.'))
 
 
     q = st.text_input("Ask a question about the content of your file:")
     if q:
-        st.session_state.history.append(HumanMessage(content=q))
-        # if 'vs' in st.session_state:
-        # with st.spinner('Working on your request ...'):
-        vs = st.session_state.vs 
-        # st.write(type(vector_store), vector_store is None)
-        # st.write(type(st.session_state.vs), st.session_state.vs is None)
+        if 'vs' in st.session_state:
+            st.session_state.history.append(HumanMessage(content=q))
+            # if 'vs' in st.session_state:
+            # with st.spinner('Working on your request ...'):
+            vs = st.session_state.vs 
+            st.write(type(vs), vs is None)
+            st.write(type(st.session_state.vs), st.session_state.vs is None)
         
-        llmchain = get_llm_chain(vector_store=vs , model_name=model_name, openai_api_key=api_key)
-        answer, chat_history = ask(query=q, llm_chain=llmchain)
-        st.session_state.history.append(AIMessage(content=answer))
+            llmchain = get_llm_chain(vector_store=vs , model_name=model_name, openai_api_key=api_key)
+            answer, chat_history = ask(query=q, llm_chain=llmchain)
+            st.session_state.history.append(AIMessage(content=answer))
 
-            # st.text_area('LLM Answer: ', value=answer)
+                # st.text_area('LLM Answer: ', value=answer)
 
-    for i, msg in enumerate(st.session_state.history[1:]):
+    for i, msg in enumerate(st.session_state.history):
         time_stamp = datetime.now().strftime("  %H:%M:%S")
-        if i % 2 == 0:
+        if i % 2 == 1:
             message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
         else:
             message(msg.content, is_user=False, key=f'{i} +  🤖')
