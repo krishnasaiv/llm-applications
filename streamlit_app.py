@@ -171,7 +171,7 @@ if __name__ == "__main__":
         api_key =  st.secrets["OPENAI_API_KEY"] #os.getenv('OPENAI_API_KEY') 
 
         
-        uploaded_file = st.file_uploader("Upload a File: ", type=['pdf', 'docx', 'txt', 'md'])
+        uploaded_file = st.file_uploader("Upload a File: ", type=['pdf', 'docx', 'txt', 'md'], on_change=reset_session)
         model_name = "gpt-3.5-turbo"
         # model_name = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4.0-turbo"], index=0, on_change=reset_session)
         chunk_size = st.number_input("Chunk Size: ", min_value=100, max_value=1024, value=512, on_change=reset_session)
