@@ -211,7 +211,6 @@ if __name__ == "__main__":
             with st.spinner("Create Embeddings..."):
                 st.write(calculate_embedding_cost(chunks))
                 vector_store = create_embeddings(chunks, openai_api_key=api_key) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
-                
                 # st.write(type(vector_store), vector_store is None, type(st.session_state.vs), st.session_state.vs is None)
                 st.write("Create/ Fetch Embeddings... Done")
             
@@ -224,17 +223,16 @@ if __name__ == "__main__":
 
 
     q = st.text_input("Ask a question about the content of your file:")
-    ask_button = st.button(":arrow_forward:")
-    if q and ask_button:
+    if q:
         st.session_state.history.append(HumanMessage(content=q))
         # if 'vs' in st.session_state:
-        with st.spinner('Working on your request ...'):
-            vector_store = st.session_state.vs 
-            st.write(type(vector_store), vector_store is None)
-            st.write(type(st.session_state.vs), st.session_state.vs is None)
-            llmchain = get_llm_chain(vector_store=vector_store , model_name=model_name, openai_api_key=api_key)
-            answer, chat_history = ask(query=q, llm_chain=llmchain)
-            st.session_state.history.append(AIMessage(content=answer))
+        # with st.spinner('Working on your request ...'):
+        vector_store = st.session_state.vs 
+        st.write(type(vector_store), vector_store is None)
+        st.write(type(st.session_state.vs), st.session_state.vs is None)
+        llmchain = get_llm_chain(vector_store=vector_store , model_name=model_name, openai_api_key=api_key)
+        answer, chat_history = ask(query=q, llm_chain=llmchain)
+        st.session_state.history.append(AIMessage(content=answer))
 
             # st.text_area('LLM Answer: ', value=answer)
 
