@@ -185,12 +185,12 @@ if __name__ == "__main__":
 
         col1, col2 = st.columns([1,1])
 
-        with col1:
-            if st.button('Reset Chat Session', on_click=reset_session):
-                reset_session()
-        with col2:
-            if st.download_button(label="Export Chat", data=json.dumps([str(message) for message in st.session_state.history], indent=4), file_name='chat_export.json', mime='application/json' ): 
-                pass
+        # with col1:
+        #     if st.button('Reset Chat Session', on_click=reset_session):
+        #         reset_session()
+        # with col2:
+        #     if st.download_button(label="Export Chat", data=json.dumps([str(message) for message in st.session_state.history], indent=4), file_name='chat_export.json', mime='application/json' ): 
+        #         pass
 
         if uploaded_file and add_data:
             with st.spinner("Reading...", ):
