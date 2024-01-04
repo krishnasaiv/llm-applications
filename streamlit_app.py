@@ -211,6 +211,7 @@ if __name__ == "__main__":
             with st.spinner("Create Embeddings..."):
                 st.write(calculate_embedding_cost(chunks))
                 vector_store = create_embeddings(chunks, openai_api_key=api_key) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
+                print(type(vector_store), vector_store)
                 st.session_state.vs = vector_store
                 st.write("Create/ Fetch Embeddings... Done")
 
