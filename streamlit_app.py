@@ -35,14 +35,11 @@ st.set_page_config(
     # page_icon='🤖'
 )
 st.subheader('Welcome to your Custom Chatbot 🤖')
-st.session_state.vs = None
-
-
-
+# st.session_state.vs = None
 if 'history' not in st.session_state:
     st.session_state.history = []
 
-st.session_state.feedback = None
+# st.session_state.feedback = None
 
 
 
@@ -175,7 +172,8 @@ if __name__ == "__main__":
 
         
         uploaded_file = st.file_uploader("Upload a File: ", type=['pdf', 'docx', 'txt', 'md'])
-        model_name = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4.0-turbo"], index=0, on_change=reset_session)
+        model_name = "gpt-3.5-turbo"
+        # model_name = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4.0-turbo"], index=0, on_change=reset_session)
         chunk_size = st.number_input("Chunk Size: ", min_value=100, max_value=1024, value=512, on_change=reset_session)
         chunk_overlap = st.number_input("Chunk Overlap: ", min_value=20, max_value=256, value=80, on_change=reset_session)
         k = st.number_input("k: ", min_value=1, max_value=20, value=3, on_change=reset_session, )
@@ -210,10 +208,11 @@ if __name__ == "__main__":
             with st.spinner("Create Embeddings..."):
                 st.write(calculate_embedding_cost(chunks))
                 vector_store = create_embeddings(chunks, openai_api_key=api_key) #insert_or_fetch_embeddings(index_name= index_name, chunks= chunks, embeddings_type=embeddings_type)
-                # st.write(type(vector_store), vector_store is None, type(st.session_state.vs), st.session_state.vs is None)
+                
                 st.write("Create/ Fetch Embeddings... Done")
             
             st.session_state.vs = vector_store
+            # st.write(type(vector_store), vector_store is None, type(st.session_state.vs), st.session_state.vs is None)
             st.success("file uploaded, chunked & embedded successfully")
 
     # if len(st.session_state.history) >= 1:
@@ -225,11 +224,10 @@ if __name__ == "__main__":
     if q:
         # if 'vs' in st.session_state:
         st.session_state.history.append(HumanMessage(content=q))
-        # if 'vs' in st.session_state:
-        # with st.spinner('Working on your request ...'):
+
         vs = st.session_state.vs 
-        st.write(type(vs), vs is None)
-        st.write(type(st.session_state.vs), st.session_state.vs is None)
+        # st.write(type(vs), vs is None)
+        # st.write(type(st.session_state.vs), st.session_state.vs is None)
     
         llmchain = get_llm_chain(vector_store=vs , model_name=model_name, openai_api_key=api_key)
         answer, chat_history = ask(query=q, llm_chain=llmchain)
