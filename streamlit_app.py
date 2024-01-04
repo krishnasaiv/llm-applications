@@ -215,7 +215,7 @@ if __name__ == "__main__":
             st.success("file uploaded, chunked & embedded successfully")
 
 
-    q = st.text_input("Ask a question about the content of your file:")
+    q = st.chat_input()
     if q:
         # if 'vs' in st.session_state:
         st.session_state.history.append(HumanMessage(content=q))
@@ -228,13 +228,16 @@ if __name__ == "__main__":
 
                 # st.text_area('LLM Answer: ', value=answer)
     with st.container():
+        all_items = st.empty()  # This will be used to house our scrollable content
 
-        for i, msg in enumerate(st.session_state.history):
-            time_stamp = datetime.now().strftime("  %H:%M:%S")
-            if i % 2 == 0:
-                message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
-            else:
-                message(msg.content, is_user=False, key=f'{i} +  🤖')
+        # We'll use the column method to create a single column layout
+        with all_items.container():
+            for i, msg in enumerate(st.session_state.history):
+                time_stamp = datetime.now().strftime("  %H:%M:%S")
+                if i % 2 == 0:
+                    message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
+                else:
+                    message(msg.content, is_user=False, key=f'{i} +  🤖')
 
 
 
