@@ -39,8 +39,8 @@ st.session_state.vs = None
 
 
 
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
+if 'history' not in st.session_state:
+    st.session_state.history = []
 
 st.session_state.feedback = None
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
             if st.button('Reset Chat Session', on_click=reset_session):
                 reset_session()
         with col2:
-            if st.download_button(label="Export Chat", data=json.dumps([str(message) for message in st.session_state.messages], indent=4), file_name='chat_export.json', mime='application/json' ): 
+            if st.download_button(label="Export Chat", data=json.dumps([str(message) for message in st.session_state.history], indent=4), file_name='chat_export.json', mime='application/json' ): 
                 pass
 
         if uploaded_file and add_data:
@@ -216,23 +216,23 @@ if __name__ == "__main__":
             st.session_state.vs = vector_store
             st.success("file uploaded, chunked & embedded successfully")
 
-    if len(st.session_state.messages) >= 1:
-        if not isinstance(st.session_state.messages[0], SystemMessage):
-            st.session_state.messages.insert(0, SystemMessage(content='You are a helpful assistant.'))
+    if len(st.session_state.history) >= 1:
+        if not isinstance(st.session_state.history[0], SystemMessage):
+            st.session_state.history.insert(0, SystemMessage(content='You are a helpful assistant.'))
 
 
     q = st.text_input("Ask a question about the content of your file:")
     if q:
-        st.session_state.messages.append(HumanMessage(content=q))
+        st.session_state.history.append(HumanMessage(content=q))
         if 'vs' in st.session_state:
             with st.spinner('Working on your request ...'):
                 llmchain = get_llm_chain(vector_store=st.session_state.vs , model_name=model_name, openai_api_key=api_key)
                 answer, chat_history = ask(query=q, llm_chain=llmchain)
-            st.session_state.messages.append(AIMessage(content=answer))
+            st.session_state.history.append(AIMessage(content=answer))
 
             # st.text_area('LLM Answer: ', value=answer)
 
-    for i, msg in enumerate(st.session_state.messages[1:]):
+    for i, msg in enumerate(st.session_state.history[1:]):
         time_stamp = datetime.now().strftime("  %H:%M:%S")
         if i % 2 == 0:
             message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
