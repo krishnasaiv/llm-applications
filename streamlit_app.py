@@ -1,7 +1,15 @@
 import os
+import json
 from langchain.vectorstores import FAISS #Chroma
+from langchain.schema import(
+    SystemMessage,
+    HumanMessage,
+    AIMessage
+)
 import pinecone, tiktoken
 import streamlit as st
+from streamlit_chat import message
+from datetime import datetime
 
 #vector stores
 from langchain.vectorstores import Pinecone
@@ -21,6 +29,22 @@ from langchain.chat_models import ChatOpenAI
 # from langchain.llms import HuggingFaceHub
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import RetrievalQA, ConversationalRetrievalChain
+
+st.set_page_config(
+    page_title='Your Custom Chatbot',
+    # page_icon='🤖'
+)
+st.subheader('Welcome to your Custom Chatbot 🤖')
+st.session_state.vs = None
+
+
+
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+
+st.session_state.feedback = None
+
+
 
 #################################
 ### Load Documents
@@ -96,9 +120,9 @@ def calculate_embedding_cost(texts):
 #################################
 ### Build LLM Chain
 
-def get_llm_chain(vector_store, openai_api_key, num_chunks=5):
+def get_llm_chain(vector_store, model_name, openai_api_key, num_chunks=5):
     # 1. Define LLM
-    llm = ChatOpenAI(model='gpt-3.5-turbo', temperature=1, openai_api_key=openai_api_key)
+    llm = ChatOpenAI(model=model_name, temperature=1, openai_api_key=openai_api_key)
 
     # 2. Vector Store retriever
     retriever = vector_store.as_retriever(search_type='similarity', search_kwargs={'k': num_chunks})
@@ -126,7 +150,16 @@ def ask(query, llm_chain, has_memory=False, chat_history = []):
     
 def reset_session():
     if 'history' in st.session_state:
-        del st.session_state['history']
+        st.session_state['history'] = []
+
+    if 'vs' in st.session_state:
+        del st.session_state['vs']
+
+
+
+# def reset_vectorstore():
+#     if 'vs' in st.session_state:
+#         del st.session_state['vs']
 
 #################################
 ### Main
@@ -138,25 +171,27 @@ if __name__ == "__main__":
     load_dotenv(find_dotenv(), override=True)
 
     with st.sidebar:
-        # api_key = st.text_input("OpenAI API Key: ", type='password')
-        # if api_key:
-        #     os.environ['OPENAI_API_KEY'] = api_key
         api_key =  st.secrets["OPENAI_API_KEY"] #os.getenv('OPENAI_API_KEY') 
         
         
         
         uploaded_file = st.file_uploader("Upload a File: ", type=['pdf', 'docx', 'txt', 'md'])
+        model_name = st.selectbox("Select Model", ["gpt-3.5-turbo", "gpt-4.0-turbo"], value="gpt-3.5-turbo", on_change=reset_session)
         chunk_size = st.number_input("Chunk Size: ", min_value=100, max_value=1024, value=512, on_change=reset_session)
         chunk_overlap = st.number_input("Chunk Overlap: ", min_value=20, max_value=256, value=80, on_change=reset_session)
-        k = st.number_input("k: ", min_value=1, max_value=20, value=3, on_change=reset_session)
-        # llm_type = st.radio("LLM", ["openai", "google"])
-        # embeddings_type = st.radio("Embeddings", ["openai", "instruct"])
-        # has_memory = st.checkbox('Save Chat History')
-        
-        # index_name = st.text_input("PineCone Index Name:")
+        k = st.number_input("k: ", min_value=1, max_value=20, value=3, on_change=reset_session, )
 
         add_data = st.button("Load Data", on_click=reset_session)
 
+
+        col1, col2 = st.columns([1,1])
+
+        with col1:
+            if st.button('Reset Chat Session', on_click=reset_session):
+                reset_session()
+        with col2:
+            if st.download_button(label="Export Chat", data=json.dumps([str(message) for message in st.session_state.messages], indent=4), file_name='chat_export.json', mime='application/json' ): 
+                pass
 
         if uploaded_file and add_data:
             with st.spinner("Reading...", ):
@@ -181,27 +216,42 @@ if __name__ == "__main__":
             st.session_state.vs = vector_store
             st.success("file uploaded, chunked & embedded successfully")
 
+    if len(st.session_state.messages) >= 1:
+        if not isinstance(st.session_state.messages[0], SystemMessage):
+            st.session_state.messages.insert(0, SystemMessage(content='You are a helpful assistant.'))
+
+
     q = st.text_input("Ask a question about the content of your file:")
     if q:
+        st.session_state.messages.append(HumanMessage(content=q))
         if 'vs' in st.session_state:
-            vector_store = st.session_state.vs 
-            st.write(f"Searching from the top {k} relevant chunks from vector store")
-            llmchain = get_llm_chain(vector_store=vector_store, openai_api_key=api_key)
-            answer, chat_history = ask(query=q, llm_chain=llmchain)
+            with st.spinner('Working on your request ...'):
+                llmchain = get_llm_chain(vector_store=st.session_state.vs , model_name=model_name, openai_api_key=api_key)
+                answer, chat_history = ask(query=q, llm_chain=llmchain)
+            st.session_state.messages.append(AIMessage(content=answer))
 
-            st.text_area('LLM Answer: ', value=answer)
+            # st.text_area('LLM Answer: ', value=answer)
 
-            st.divider()
+    for i, msg in enumerate(st.session_state.messages[1:]):
+        time_stamp = datetime.now().strftime("  %H:%M:%S")
+        if i % 2 == 0:
+            message(f"{msg.content} {time_stamp}", is_user=True, key=f'{i} + 🤓') # user's question
+        else:
+            message(msg.content, is_user=False, key=f'{i} +  🤖')
 
-            if 'chat_history' not in st.session_state:
-                st.session_state.chat_history = ''
 
-            display_text = f'Question: {q} \nAns: {answer}'
 
-            st.session_state.chat_history = f'{display_text} \n {"-" * 100} \n {st.session_state.chat_history}'
-            hist = st.session_state.chat_history
+            # st.divider()
 
-            st.text_area(label='Chat History', value=hist, key='chat_history', height=400)
+            # if 'chat_history' not in st.session_state:
+            #     st.session_state.chat_history = ''
+
+            # display_text = f'Question: {q} \nAns: {answer}'
+
+            # st.session_state.chat_history = f'{display_text} \n {"-" * 100} \n {st.session_state.chat_history}'
+            # hist = st.session_state.chat_history
+
+            # st.text_area(label='Chat History', value=hist, key='chat_history', height=400)
 
             
 
