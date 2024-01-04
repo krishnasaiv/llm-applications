@@ -223,17 +223,17 @@ if __name__ == "__main__":
 
     q = st.text_input("Ask a question about the content of your file:")
     if q:
-        if 'vs' in st.session_state:
-            st.session_state.history.append(HumanMessage(content=q))
-            # if 'vs' in st.session_state:
-            # with st.spinner('Working on your request ...'):
-            vs = st.session_state.vs 
-            st.write(type(vs), vs is None)
-            st.write(type(st.session_state.vs), st.session_state.vs is None)
-        
-            llmchain = get_llm_chain(vector_store=vs , model_name=model_name, openai_api_key=api_key)
-            answer, chat_history = ask(query=q, llm_chain=llmchain)
-            st.session_state.history.append(AIMessage(content=answer))
+        # if 'vs' in st.session_state:
+        st.session_state.history.append(HumanMessage(content=q))
+        # if 'vs' in st.session_state:
+        # with st.spinner('Working on your request ...'):
+        vs = st.session_state.vs 
+        st.write(type(vs), vs is None)
+        st.write(type(st.session_state.vs), st.session_state.vs is None)
+    
+        llmchain = get_llm_chain(vector_store=vs , model_name=model_name, openai_api_key=api_key)
+        answer, chat_history = ask(query=q, llm_chain=llmchain)
+        st.session_state.history.append(AIMessage(content=answer))
 
                 # st.text_area('LLM Answer: ', value=answer)
 
