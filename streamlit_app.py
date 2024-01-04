@@ -223,7 +223,8 @@ if __name__ == "__main__":
         vs = st.session_state.vs 
 
         llmchain = get_llm_chain(vector_store=vs , model_name=model_name, openai_api_key=api_key)
-        answer, chat_history = ask(query=q, llm_chain=llmchain)
+        with st.spinner('Working on your request ...'):
+            answer, chat_history = ask(query=q, llm_chain=llmchain)
         st.session_state.history.append(AIMessage(content=answer))
 
                 # st.text_area('LLM Answer: ', value=answer)
